@@ -55,37 +55,36 @@ const getAllWorkouts = async (req, res) => {
     if (muscleGroup) {
       filter.muscleGroups = { $in: [muscleGroup] };
     }
-
     if (difficulty) {
       filter.difficulty = difficulty;
     }
-
     if (minDuration || maxDuration) {
       filter.duration = {};
       if (minDuration) filter.duration.$gte = Number(minDuration);
       if (maxDuration) filter.duration.$lte = Number(maxDuration);
     }
-
     if (search) {
       filter.title = { $regex: search, $options: "i" };
     }
 
     const skip = (Number(page) - 1) * Number(limit);
-
     const total = await Workout.countDocuments(filter);
     const workouts = await Workout.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit))
-      .populate("user", "name avatar");
+      .populate("user", "name avatar")
+      .lean();
 
     res.status(200).json({
       workouts,
       currentPage: Number(page),
-      totalPages: Math.ceil(total / Number(limit)),
+      totalPages: Math.ceil(total / Number(limit)) || 1,
       totalWorkouts: total,
     });
   } catch (error) {
+    console.error("GET WORKOUTS ERROR:", error.message);
+    console.error("STACK:", error.stack);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

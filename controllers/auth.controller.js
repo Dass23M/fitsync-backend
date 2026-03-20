@@ -52,10 +52,11 @@ const register = async (req, res) => {
       user,
     });
   } catch (error) {
+    console.error("REGISTER ERROR:", error.message);
+    console.error("FULL ERROR:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -64,7 +65,9 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const user = await User.findOne({ email }).select("+password +refreshToken");
+    const user = await User.findOne({ email }).select(
+      "+password +refreshToken",
+    );
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -134,7 +137,9 @@ const refreshToken = async (req, res) => {
     res.status(200).json({ message: "Token refreshed successfully" });
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      return res.status(401).json({ message: "Refresh token expired, please login again" });
+      return res
+        .status(401)
+        .json({ message: "Refresh token expired, please login again" });
     }
     res.status(500).json({ message: "Server error", error: error.message });
   }

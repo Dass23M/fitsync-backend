@@ -26,13 +26,21 @@ const createPlan = async (req, res) => {
 
     res.status(201).json({ message: "Plan created successfully", plan });
   } catch (error) {
+    console.error("CREATE PLAN ERROR:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 const getAllPlans = async (req, res) => {
   try {
-    const { difficulty, minWeeks, maxWeeks, search, page = 1, limit = 10 } = req.query;
+    const {
+      difficulty,
+      minWeeks,
+      maxWeeks,
+      search,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
     const filter = {};
 
@@ -56,15 +64,17 @@ const getAllPlans = async (req, res) => {
       .skip(skip)
       .limit(Number(limit))
       .populate("coach", "name avatar")
-      .populate("workouts", "title duration difficulty");
+      .populate("workouts", "title duration difficulty")
+      .lean();
 
     res.status(200).json({
       plans,
       currentPage: Number(page),
-      totalPages: Math.ceil(total / Number(limit)),
+      totalPages: Math.ceil(total / Number(limit)) || 1,
       totalPlans: total,
     });
   } catch (error) {
+    console.error("GET PLANS ERROR:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -73,7 +83,8 @@ const getPlanById = async (req, res) => {
   try {
     const plan = await Plan.findById(req.params.id)
       .populate("coach", "name avatar")
-      .populate("workouts", "title duration difficulty muscleGroups");
+      .populate("workouts", "title duration difficulty muscleGroups")
+      .lean();
 
     if (!plan) {
       return res.status(404).json({ message: "Plan not found" });
@@ -81,6 +92,7 @@ const getPlanById = async (req, res) => {
 
     res.status(200).json({ plan });
   } catch (error) {
+    console.error("GET PLAN ERROR:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -105,6 +117,7 @@ const updatePlan = async (req, res) => {
 
     res.status(200).json({ message: "Plan updated successfully", plan: updated });
   } catch (error) {
+    console.error("UPDATE PLAN ERROR:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -126,8 +139,15 @@ const deletePlan = async (req, res) => {
 
     res.status(200).json({ message: "Plan deleted successfully" });
   } catch (error) {
+    console.error("DELETE PLAN ERROR:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-module.exports = { createPlan, getAllPlans, getPlanById, updatePlan, deletePlan };
+module.exports = {
+  createPlan,
+  getAllPlans,
+  getPlanById,
+  updatePlan,
+  deletePlan,
+};
