@@ -56,7 +56,6 @@ connectDB();
 initSocket(io);
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -70,12 +69,13 @@ app.use("/api/upload", uploadRoutes);
 app.get("/api/health", (req, res) => {
   res.json({
     status: "FitSync API is running",
+    environment: process.env.NODE_ENV,
     allowedOrigins,
   });
 });
 
 app.use((err, req, res, next) => {
-  if (err.message.startsWith("CORS blocked")) {
+  if (err.message?.startsWith("CORS blocked")) {
     return res.status(403).json({ message: err.message });
   }
   console.error(err.stack);
@@ -83,7 +83,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Allowed origins: ${allowedOrigins.join(", ")}`);
 });
