@@ -5,6 +5,8 @@ const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
 const { Server } = require("socket.io");
 
+
+
 const connectDB = require("./config/db");
 const initSocket = require("./socket/events");
 
@@ -41,6 +43,7 @@ app.use("/api/workouts", workoutRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/upload", uploadRoutes);
+app.set("io", io);  
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "FitSync API is running" });
