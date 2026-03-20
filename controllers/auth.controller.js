@@ -9,16 +9,15 @@ const generateRefreshToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 };
 
-const setCookies = (res, accessToken, refreshToken) => {
-  const isProduction = process.env.NODE_ENV === "production";
+const isProduction = process.env.NODE_ENV === "production";
 
+const setCookies = (res, accessToken, refreshToken) => {
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "none" : "strict",
     maxAge: 15 * 60 * 1000,
   });
-
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: isProduction,
@@ -26,6 +25,7 @@ const setCookies = (res, accessToken, refreshToken) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
+
 const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -51,14 +51,15 @@ const register = async (req, res) => {
 
     res.status(201).json({
       message: "Registration successful",
+      accessToken,
       user,
     });
   } catch (error) {
     console.error("REGISTER ERROR:", error.message);
-    console.error("FULL ERROR:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -67,9 +68,7 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const user = await User.findOne({ email }).select(
-      "+password +refreshToken",
-    );
+    const user = await User.findOne({ email }).select("+password +refreshToken");
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -89,9 +88,11 @@ const login = async (req, res) => {
 
     res.status(200).json({
       message: "Login successful",
+      accessToken,
       user,
     });
   } catch (error) {
+    console.error("LOGIN ERROR:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -104,8 +105,16 @@ const logout = async (req, res) => {
       await user.save();
     }
 
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "strict",
+    });
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "strict",
+    });
 
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
@@ -122,8 +131,8 @@ const refreshToken = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-
     const user = await User.findById(decoded.id).select("+refreshToken");
+
     if (!user || user.refreshToken !== token) {
       return res.status(401).json({ message: "Invalid refresh token" });
     }
@@ -136,12 +145,13 @@ const refreshToken = async (req, res) => {
 
     setCookies(res, newAccessToken, newRefreshToken);
 
-    res.status(200).json({ message: "Token refreshed successfully" });
+    res.status(200).json({
+      message: "Token refreshed successfully",
+      accessToken: newAccessToken,
+    });
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      return res
-        .status(401)
-        .json({ message: "Refresh token expired, please login again" });
+      return res.status(401).json({ message: "Refresh token expired, please login again" });
     }
     res.status(500).json({ message: "Server error", error: error.message });
   }
