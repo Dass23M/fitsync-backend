@@ -17,14 +17,12 @@ const setCookies = (res, accessToken, refreshToken) => {
     secure: isProduction,
     sameSite: isProduction ? "none" : "strict",
     maxAge: 15 * 60 * 1000,
-    path: "/",
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "none" : "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    path: "/",
   });
 };
 
@@ -111,13 +109,11 @@ const logout = async (req, res) => {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "strict",
-      path: "/",
     });
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "strict",
-      path: "/",
     });
 
     res.status(200).json({ message: "Logged out successfully" });
@@ -129,8 +125,6 @@ const logout = async (req, res) => {
 const refreshToken = async (req, res) => {
   try {
     const token = req.cookies.refreshToken;
-    console.log("REFRESH - Cookie token exists:", !!token);
-    console.log("REFRESH - All cookies:", Object.keys(req.cookies));
 
     if (!token) {
       return res.status(401).json({ message: "No refresh token" });
@@ -156,7 +150,6 @@ const refreshToken = async (req, res) => {
       accessToken: newAccessToken,
     });
   } catch (error) {
-    console.error("REFRESH ERROR:", error.message);
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({ message: "Refresh token expired, please login again" });
     }
