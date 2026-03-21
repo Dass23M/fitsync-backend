@@ -16,16 +16,16 @@ const setCookies = (res, accessToken, refreshToken) => {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "none" : "strict",
-    maxAge: 15 * 60 * 1000,
+    maxAge: 15 * 60 * 1000, // 15 min
   });
+
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "none" : "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 24 * 60 * 60 * 1000, // ✅ 1 day
   });
 };
-
 const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
